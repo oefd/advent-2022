@@ -1,16 +1,11 @@
 fn main() {
-    let input = std::io::stdin().lines().map(Result::unwrap);
-    #[cfg(feature = "part_1")]
-    {
-        let count = top_elf_count(input);
-        println!("top elf: {}", count);
-    }
+    let stdin = util::Stdin::new();
 
-    #[cfg(feature = "part_2")]
-    {
-        let count = top_elves_count(input);
-        println!("top elves: {}", count);
-    }
+    let count = top_elf_count(stdin.lines());
+    println!("top elf:   {: >8}", count);
+
+    let count = top_elves_count(stdin.lines());
+    println!("top elves: {: >8}", count);
 }
 
 //
