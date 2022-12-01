@@ -1,0 +1,12 @@
+[package]
+name = "day01"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+default = []
+part_1 = []
+part_2 = []
+attempt_optimal = []
+
+[dependencies]
