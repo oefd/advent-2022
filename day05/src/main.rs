@@ -9,7 +9,7 @@ fn main() {
     let stdin = util::Stdin::new();
     let mut input = stdin.cleaned_lines();
 
-    let mut deck = {
+    let mut deck_9000 = {
         let mut deck_builder = DeckBuilder::new();
         input
             .by_ref()
@@ -17,12 +17,23 @@ fn main() {
             .for_each(|line| deck_builder.feed_line(line.as_str()));
         deck_builder.build()
     };
+    let mut deck_9001 = deck_9000.clone();
 
     input
         .map(|line| Movement::from(line.as_str()))
-        .for_each(|movement| deck.make_movement_9000(&movement));
+        .for_each(|movement| {
+            deck_9000.make_movement_9000(&movement);
+            deck_9001.make_movement_9001(&movement);
+        });
 
-    println!("top crates are {}", deck.top_crates());
+    println!(
+        "cratemover 9000's top crates are {}",
+        deck_9000.top_crates()
+    );
+    println!(
+        "cratemover 9001's top crates are {}",
+        deck_9001.top_crates()
+    );
 }
 
 #[cfg(test)]

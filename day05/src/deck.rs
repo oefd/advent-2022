@@ -17,7 +17,7 @@ impl DeckBuilder {
             .for_each(|(idx, chars)| {
                 if chars[1] != ' ' {
                     self.ensure_stacks_init(idx + 1);
-                    self.0[idx].push_back(chars[1]);
+                    self.0[idx].push_front(chars[1]);
                 }
             });
     }
@@ -34,22 +34,23 @@ impl DeckBuilder {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Deck(Vec<VecDeque<char>>);
 
 impl Deck {
     pub fn make_movement_9000(&mut self, m: &Movement) {
         for _ in 0..m.count {
-            let crate_ = self.0[m.source - 1].pop_front().unwrap();
-            self.0[m.destination - 1].push_front(crate_);
+            let crate_ = self.0[m.source - 1].pop_back().unwrap();
+            self.0[m.destination - 1].push_back(crate_);
         }
     }
 
     pub fn make_movement_9001(&mut self, m: &Movement) {
-        let crates_not_moving = self.0[m.source].len() - m.count;
-        let (source, destination) = self.mut_refs_to(m.source, m.destination);
+        let (source_i, destination_i) = (m.source-1, m.destination-1);
+        let crates_not_moving = self.0[source_i].len() - m.count;
+        let (source, destination) = self.mut_refs_to(source_i, destination_i);
         for ch in source.iter().skip(crates_not_moving) {
-            destination.push_front(*ch);
+            destination.push_back(*ch);
         }
         source.truncate(crates_not_moving);
     }
@@ -57,7 +58,7 @@ impl Deck {
     pub fn top_crates(&self) -> String {
         self.0
             .iter()
-            .map(|stack| stack.front().unwrap_or(&' '))
+            .map(|stack| stack.back().unwrap_or(&' '))
             .collect()
     }
 
@@ -112,6 +113,6 @@ mod test {
         assert!(vecs[2][2] == 'F');
         assert!(vecs[2][1] == 'G');
         assert!(vecs[2][0] == 'C');
-        assert!(vecs[1].len() == 4);
+        assert!(vecs[2].len() == 4);
     }
 }
