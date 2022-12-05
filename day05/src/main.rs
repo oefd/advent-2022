@@ -20,7 +20,7 @@ fn main() {
 
     input
         .map(|line| Movement::from(line.as_str()))
-        .for_each(|movement| deck.make_movement(&movement));
+        .for_each(|movement| deck.make_movement_9000(&movement));
 
     println!("top crates are {}", deck.top_crates());
 }
@@ -37,7 +37,7 @@ mod test {
             builder.feed_line(input);
             builder.build()
         };
-        deck.make_movement(&Movement {
+        deck.make_movement_9000(&Movement {
             count: 1,
             source: 1,
             destination: 3,
@@ -46,7 +46,7 @@ mod test {
     }
 
     #[test]
-    fn multilevel_move() {
+    fn multilevel_move_9000() {
         let mut deck = {
             let mut builder = DeckBuilder::new();
             for line in ["    [E] [F]    ", "[A] [B] [C] [D]"] {
@@ -55,11 +55,29 @@ mod test {
             builder.build()
         };
         assert!(deck.top_crates() == "AEFD");
-        deck.make_movement(&Movement {
+        deck.make_movement_9000(&Movement {
             count: 2,
             source: 2,
             destination: 3,
         });
         assert!(deck.top_crates() == "A BD");
+    }
+
+    #[test]
+    fn multilevel_move_9001() {
+        let mut deck = {
+            let mut builder = DeckBuilder::new();
+            for line in ["    [E] [F]    ", "[A] [B] [C] [D]"] {
+                builder.feed_line(line);
+            }
+            builder.build()
+        };
+        assert!(deck.top_crates() == "AEFD");
+        deck.make_movement_9001(&Movement {
+            count: 2,
+            source: 2,
+            destination: 3,
+        });
+        assert!(deck.top_crates() == "A ED");
     }
 }
