@@ -4,5 +4,6 @@ members = [
     "day02",
     "day02-traits",
     "day03",
+    "day04",
     "util"
 ]
