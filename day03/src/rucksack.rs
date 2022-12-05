@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 
 pub struct Rucksack<'a> {
+    compartments_def: &'a str,
     pub compartments: [Compartment<'a>; 2],
 }
 
@@ -12,6 +13,7 @@ impl<'a> Rucksack<'a> {
         let (c1, c2) = (&s[..midpoint], &s[midpoint..]);
 
         Rucksack {
+            compartments_def: s,
             compartments: [Compartment::from_str(c1), Compartment::from_str(c2)],
         }
     }
@@ -24,6 +26,14 @@ impl<'a> Rucksack<'a> {
             .chars()
             .find(|ch| left_items.contains(ch))
             .expect("no overvlap in compartment items")
+    }
+
+    pub fn as_str(&self) -> &str {
+        self.compartments_def
+    }
+
+    pub fn items(&self) -> HashSet<char> {
+        HashSet::from_iter(self.as_str().chars())
     }
 }
 
