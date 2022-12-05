@@ -1,62 +1,117 @@
-#![feature(iter_array_chunks)]
+#![feature(array_chunks)]
 use std::collections::HashSet;
-
-mod rucksack;
-
-use rucksack::Rucksack;
 
 fn main() {
     let stdin = util::Stdin::new();
-    let input: Vec<String> = stdin.lines().filter(|l| !l.is_empty()).collect();
+    let input: Vec<String> = stdin.cleaned_lines().collect();
+    let rucksacks: Vec<Rucksack> = input
+        .iter()
+        .map(|line| Rucksack::from_str(line.as_str()))
+        .collect();
 
     // part 1
-    let rucksacks = input.iter().map(|line| Rucksack::from_str(line));
-    let priority_sum: u64 = rucksacks
-        .map(|sack| priority(&sack.overlapping_item()))
+    let bad_sort_priorities: u64 = rucksacks
+        .iter()
+        .map(Rucksack::overlapping_item)
+        .map(priority_from_char)
         .sum();
-    println!("rucksacks have sum of priorities: {}", priority_sum);
+    println!("badly sorted items priority {}", bad_sort_priorities);
 
     // part 2
-    let groups = input.iter().array_chunks::<3>();
-    let badges = groups.map(|group| {
-        let rucksacks = &[
-            Rucksack::from_str(group[0]),
-            Rucksack::from_str(group[1]),
-            Rucksack::from_str(group[2]),
-        ];
-        priority(&find_badge(&rucksacks))
-    });
-    let priority_sum: u64 = badges.sum();
-    println!("groups have sum of badge priorities: {}", priority_sum);
+    let badge_priorities: u64 = rucksacks
+        .array_chunks::<3>()
+        .map(|group| find_group_badge(group))
+        .map(priority_from_char)
+        .sum();
+    println!("badge items priority {}", badge_priorities);
 }
 
-fn priority(item: &char) -> u64 {
+fn find_group_badge(group: &[Rucksack]) -> char {
+    let item_sets: Vec<HashSet<char>> = group.iter().map(|rs| rs.item_set()).collect();
+    let intersection: HashSet<char> = item_sets
+        .into_iter()
+        .reduce(|a, b| a.intersection(&b).copied().collect())
+        .unwrap();
+    assert!(intersection.len() == 1);
+    intersection.into_iter().next().unwrap()
+}
+
+fn priority_from_char(ch: char) -> u64 {
     let ascii_value: u64 = {
         let mut buf = [0u8; 1];
-        item.encode_utf8(&mut buf);
+        ch.encode_utf8(&mut buf);
         buf[0].into()
     };
-    if item.is_ascii_uppercase() {
-        ascii_value - 38
-    } else if item.is_ascii_lowercase() {
-        ascii_value - 96
-    } else {
-        panic!("non-ascii alphabetic character in compartment");
+    match ascii_value {
+        0x41..=0x5A => ascii_value - 38,
+        0x61..=0x7A => ascii_value - 96,
+        _ => unreachable!(),
     }
 }
 
-fn find_badge(group: &[Rucksack; 3]) -> char {
-    let sack_1_items = group[0].items();
-    let sack_2_items = group[1].items();
-    let intersection: HashSet<&char> = sack_1_items.intersection(&sack_2_items).collect();
+struct Rucksack<'a> {
+    definition: &'a str,
+    compartments: [&'a str; 2],
+}
 
-    if let Some(badge) = group[2]
-        .as_str()
-        .chars()
-        .find(|ch| intersection.contains(ch))
-    {
-        badge
-    } else {
-        panic!("expected shared item between all rucksacks in group");
+impl<'a> Rucksack<'a> {
+    pub fn from_str(s: &'a str) -> Self {
+        let midpoint = s.len() / 2;
+        Rucksack {
+            definition: s,
+            compartments: [&s[..midpoint], &s[midpoint..]],
+        }
+    }
+
+    pub fn item_set(&self) -> HashSet<char> {
+        HashSet::from_iter(self.definition.chars())
+    }
+
+    pub fn overlapping_item(&self) -> char {
+        let left_items: HashSet<char> = HashSet::from_iter(self.compartments[0].chars());
+        self.compartments[1]
+            .chars()
+            .find(|ch| left_items.contains(ch))
+            .unwrap()
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn badge_finding() {
+        let group = [Rucksack::from_str("abcXYZ"), Rucksack::from_str("efgHIZ")];
+        assert!(find_group_badge(&group) == 'Z');
+
+        let group = [Rucksack::from_str("abcXYZ"), Rucksack::from_str("efgZIJ")];
+        assert!(find_group_badge(&group) == 'Z');
+
+        let group = [
+            Rucksack::from_str("abcXYZ"),
+            Rucksack::from_str("efgZIJ"),
+            Rucksack::from_str("qZrwks"),
+        ];
+        assert!(find_group_badge(&group) == 'Z');
+
+        let group = [
+            Rucksack::from_str("abcXYZ"),
+            Rucksack::from_str("nnZnnn"),
+            Rucksack::from_str("Zeeeee"),
+            Rucksack::from_str("tttZtt"),
+        ];
+        assert!(find_group_badge(&group) == 'Z');
+    }
+
+    #[test]
+    #[should_panic]
+    fn badge_finding_fails() {
+        let group = [
+            Rucksack::from_str("aaZaaa"),
+            Rucksack::from_str("llllZl"),
+            Rucksack::from_str("nnnnnn"),
+        ];
+        assert!(find_group_badge(&group) == 'Z');
     }
 }

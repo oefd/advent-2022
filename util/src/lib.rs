@@ -21,4 +21,8 @@ impl Stdin {
     pub fn lines(&self) -> impl Iterator<Item = String> {
         self.cursor.clone().lines().map(Result::unwrap)
     }
+
+    pub fn cleaned_lines(&self) -> impl Iterator<Item = String> {
+        self.lines().filter(|line| !line.is_empty())
+    }
 }
