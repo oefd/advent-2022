@@ -3,6 +3,8 @@ use std::{
     rc::{Rc, Weak},
 };
 
+const INDENT_SIZE: usize = 2;
+
 /// We wrap the `Node_` so that the consumer of this module doesn't need to
 /// worry or think about the ref counting and ref cell use. (Why we need that
 /// explained below on the `Node_`)
@@ -33,6 +35,19 @@ impl Node {
         }
     }
 
+    pub fn is_dir(&self) -> bool {
+        let inner = self.0.borrow();
+        if let Meta::Dir { .. } = inner.meta {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn is_file(&self) -> bool {
+        !self.is_dir()
+    }
+
     pub fn add_dir(&mut self, name: String) -> Node {
         self.add_child(Node_ {
             name,
@@ -57,6 +72,11 @@ impl Node {
         }
     }
 
+    pub fn print(&self) {
+        let inner = self.0.borrow();
+        inner.print(0);
+    }
+
     fn add_child(&mut self, child: Node_) -> Node {
         let mut inner = self.0.borrow_mut();
         let child = Rc::new(RefCell::new(child));
@@ -66,6 +86,12 @@ impl Node {
         } else {
             panic!("attempted to add node to non-dir");
         }
+    }
+}
+
+impl Clone for Node {
+    fn clone(&self) -> Self {
+        Node(self.0.clone())
     }
 }
 
@@ -92,7 +118,7 @@ struct Node_ {
     meta: Meta,
 }
 
-pub enum Meta {
+enum Meta {
     Dir { children: Vec<Rc<RefCell<Node_>>> },
     File { size: usize },
 }
@@ -110,6 +136,21 @@ impl Node_ {
         match &self.meta {
             Meta::File { size } => *size,
             Meta::Dir { children } => children.iter().map(|child| child.borrow().size()).sum(),
+        }
+    }
+
+    fn print(&self, indent: usize) {
+        match &self.meta {
+            Meta::File { size } => {
+                println!("{}{} ({})", " ".repeat(indent), self.name, size);
+            }
+            Meta::Dir { ref children } => {
+                let postfix = if self.name == "/" { "" } else { "/" };
+                println!("{}{}{}", " ".repeat(indent), self.name, postfix);
+                children
+                    .iter()
+                    .for_each(|child| child.borrow().print(indent + INDENT_SIZE));
+            }
         }
     }
 }
