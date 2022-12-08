@@ -44,10 +44,6 @@ impl Node {
         }
     }
 
-    pub fn is_file(&self) -> bool {
-        !self.is_dir()
-    }
-
     pub fn add_dir(&mut self, name: String) -> Node {
         self.add_child(Node_ {
             name,
