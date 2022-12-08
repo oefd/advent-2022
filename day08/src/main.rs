@@ -2,11 +2,19 @@ fn main() {
     let stdin = util::Stdin::new();
     let lines = stdin.cleaned_lines();
     let forest = Forest::from_strings(lines);
+
     let total_visible: usize = forest
         .iter()
         .map(|tree| if forest.is_visible(tree) { 1 } else { 0 })
         .sum();
     println!("{} trees are visible from the outside", total_visible);
+
+    let most_scenic: usize = forest
+        .iter()
+        .map(|tree| forest.scenic_score(tree))
+        .max()
+        .unwrap();
+    println!("the most scenic tree has a score of {}", most_scenic);
 }
 
 struct Forest {
@@ -38,16 +46,12 @@ impl Forest {
 
     pub fn get(&self, row_col: (usize, usize)) -> u8 {
         let (row, col) = row_col;
-        assert!(row < self.height);
-        assert!(col < self.width);
         let inner_idx = (row * self.width) + col;
         self.trees[inner_idx]
     }
 
     pub fn lines_of_sight(&self, row_col: (usize, usize)) -> LinesOfSight {
         let (row, col) = row_col;
-        assert!(row < self.height);
-        assert!(col < self.width);
 
         LinesOfSight {
             north: (0..row)
@@ -69,8 +73,6 @@ impl Forest {
 
     pub fn is_visible(&self, row_col: (usize, usize)) -> bool {
         let (row, col) = row_col;
-        assert!(row < self.height);
-        assert!(col < self.width);
 
         let is_edge_row = row == 0 || row == self.height - 1;
         let is_edge_col = col == 0 || col == self.width - 1;
@@ -108,6 +110,35 @@ impl Forest {
                 }
             }
         })
+    }
+
+    pub fn scenic_score(&self, tree: (usize, usize)) -> usize {
+        let height = self.get(tree);
+        let los = self.lines_of_sight(tree);
+
+        let view_north = self.count_visible_trees(height, los.north.into_iter());
+        let view_south = self.count_visible_trees(height, los.south.into_iter());
+        let view_east = self.count_visible_trees(height, los.east.into_iter());
+        let view_west = self.count_visible_trees(height, los.west.into_iter());
+        view_north * view_south * view_east * view_west
+    }
+
+    fn count_visible_trees(
+        &self,
+        height: u8,
+        trees: impl Iterator<Item = (usize, usize)>,
+    ) -> usize {
+        let mut count = 0;
+        for tree in trees {
+            let other = self.get(tree);
+            if other < height {
+                count += 1;
+            } else if other >= height {
+                count += 1;
+                break;
+            }
+        }
+        count
     }
 }
 
@@ -208,5 +239,22 @@ mod test {
         assert!(iter.next().unwrap() == (1, 1));
         assert!(iter.next().unwrap() == (1, 2));
         assert!(iter.next().is_none());
+    }
+
+    #[test]
+    fn scenic_score() {
+        let forest = Forest::from_strings(
+            [
+                "1112".to_string(),
+                "1211".to_string(),
+                "1111".to_string(),
+                "1111".to_string(),
+            ]
+            .into_iter(),
+        );
+
+        // assert!(forest.scenic_score((0, 0)) == 0);
+        // assert!(forest.scenic_score((1, 1)) == 1 * 2 * 2 * 1);
+        assert!(forest.scenic_score((2, 1)) == 1 * 1 * 1 * 1);
     }
 }
