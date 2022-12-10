@@ -16,6 +16,9 @@ fn main() {
             if let Some(line) = lines.next() {
                 cpu.i = Some(Instruction::from(line.as_str()));
             } else {
+                println!("cumulative strength: {}", cumulative_strength);
+                println!("out of instructions at cycle {}", cpu.clock);
+                cpu.draw_crt();
                 break 'run_cpu;
             }
         }
@@ -23,10 +26,10 @@ fn main() {
             wait_for_cycle = cycle_of_interest.next().unwrap();
             let signal_strength = (cpu.clock as isize) * cpu.r[0];
             println!("at clock {} strength is {}", cpu.clock, signal_strength);
+            cpu.draw_crt();
             cumulative_strength += signal_strength;
         }
     }
-    println!("cumulative strength: {}", cumulative_strength);
 }
 
 fn tick_until_clock_or_complete_instruction<const N: usize>(cpu: &mut Cpu<N>, clock: usize) {
@@ -56,11 +59,11 @@ fn cycles_of_interest(max: usize) -> impl Iterator<Item = usize> {
     })
 }
 
-#[derive(Debug)]
 struct Cpu<const N: usize> {
     pub r: [isize; N],
     pub i: Option<Instruction>,
     pub clock: usize,
+    crt: [bool; 40 * 6],
 }
 
 impl<const N: usize> Cpu<N> {
@@ -69,6 +72,7 @@ impl<const N: usize> Cpu<N> {
             clock: 1,
             r: [1; N],
             i: None,
+            crt: [false; 40 * 6],
         }
     }
 
@@ -77,11 +81,32 @@ impl<const N: usize> Cpu<N> {
         let mut instruction = self.i.take().unwrap();
         let (effect, is_done) = instruction.tick();
         self.apply_effect(effect);
+        self.draw_pixel();
         self.clock += 1;
 
         if !is_done {
             self.i = Some(instruction);
         }
+    }
+
+    pub fn draw_crt(&self) {
+        println!("");
+        for i in 0..6 {
+            for j in 0..40 {
+                let pixel = (i * 40) + j;
+                print!("{}", if self.crt[pixel] { '#' } else { '.' });
+            }
+            println!("");
+        }
+        println!("");
+    }
+
+    fn draw_pixel(&mut self) {
+        let sprite = (self.r[0] - 1)..=(self.r[0] + 1);
+        let pixel_idx = self.clock % 240;
+        let pixel_horizontal_value = self.clock % 40;
+        let pixel_on = sprite.contains(&(pixel_horizontal_value as isize));
+        self.crt[pixel_idx] = pixel_on;
     }
 
     fn apply_effect(&mut self, side_effect: SideEffect) {
