@@ -50,3 +50,8 @@ day08: build
 day09: build
 	@echo -e "\033[1;36m== day09 ==\033[0m\033[0;34m"
 	@./target/release/day09 < day09/test_input | sed 's/^/  /'
+
+.PHONY: day10
+day10: build
+	@echo -e "\033[1;36m== day10 ==\033[0m\033[0;34m"
+	@./target/release/day10 < day10/test_input | sed 's/^/  /'
