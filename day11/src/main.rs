@@ -1,4 +1,4 @@
-use rug::Integer;
+use bigint::U512;
 
 mod monkey;
 mod operation;
@@ -15,15 +15,18 @@ fn main() {
     //     perform_round(&mut monkies, false);
     // }
 
-    for round in 0..10_000 {
-        if round % 10 == 0 {
+    for round in 0..1000 {
+        if round % 1000 == 0 {
             println!("round {}...", round);
         }
         perform_round(&mut monkies, true);
     }
+    for (i, monkey) in monkies.iter().enumerate() {
+        println!("monkey {} inspected {}", i, monkey.inspections);
+    }
 
     let most_active = monkies.iter().map(|m| &m.inspections).fold(
-        (Integer::from(0), Integer::from(0)),
+        (U512::from(0), U512::from(0)),
         |acc, inspections| {
             if inspections > &acc.0 {
                 (inspections.clone(), acc.0)
