@@ -1,3 +1,5 @@
+use rug::Integer;
+
 mod monkey;
 mod operation;
 mod test;
@@ -11,18 +13,18 @@ fn main() {
     for _ in 0..20 {
         perform_round(&mut monkies);
     }
-    let most_active = monkies
-        .iter()
-        .map(|m| m.inspections)
-        .fold((0, 0), |acc, inspections| {
-            if inspections > acc.0 {
-                (inspections, acc.0)
-            } else if inspections > acc.1 {
-                (acc.0, inspections)
+    let most_active = monkies.iter().map(|m| &m.inspections).fold(
+        (Integer::from(0), Integer::from(0)),
+        |acc, inspections| {
+            if inspections > &acc.0 {
+                (inspections.clone(), acc.0)
+            } else if inspections > &acc.1 {
+                (acc.0, inspections.clone())
             } else {
                 acc
             }
-        });
+        },
+    );
     let monkey_business = most_active.0 * most_active.1;
     println!("monkey business: {}", monkey_business);
 }

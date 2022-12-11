@@ -1,12 +1,14 @@
+use rug::ops::DivRoundingAssign;
+use rug::Integer;
 use std::collections::VecDeque;
 
 use crate::{operation, test};
 
 pub struct Monkey {
-    pub items: VecDeque<usize>,
-    pub inspections: usize,
-    op: Box<dyn Fn(usize) -> usize>,
-    test: Box<dyn Fn(usize) -> bool>,
+    pub items: VecDeque<Integer>,
+    pub inspections: Integer,
+    op: Box<dyn Fn(&mut Integer)>,
+    test: Box<dyn Fn(&Integer) -> bool>,
     throw_true: usize,
     throw_false: usize,
 }
@@ -18,9 +20,9 @@ impl From<&mut dyn Iterator<Item = String>> for Monkey {
         let items = iter.next().unwrap();
         assert!(items.starts_with("  Starting items: "));
         let items = &items[18..];
-        let items: VecDeque<usize> = items
+        let items: VecDeque<Integer> = items
             .split(", ")
-            .map(|item| item.parse::<usize>().unwrap())
+            .map(|item| item.parse::<Integer>().unwrap())
             .collect();
 
         let op = iter.next().unwrap();
@@ -43,7 +45,7 @@ impl From<&mut dyn Iterator<Item = String>> for Monkey {
 
         Self {
             items,
-            inspections: 0,
+            inspections: Integer::from(0),
             op,
             test,
             throw_true,
@@ -55,11 +57,11 @@ impl From<&mut dyn Iterator<Item = String>> for Monkey {
 impl Monkey {
     /// Inspect the next item, if any, and return the item
     /// and to which Monkey the item should be thrown.
-    pub fn inspect(&mut self) -> Option<(usize, usize)> {
+    pub fn inspect(&mut self) -> Option<(Integer, usize)> {
         let mut item = self.items.pop_front()?;
-        item = (self.op)(item);
-        item = (item as f64 / 3.0).floor() as usize;
-        let test = (self.test)(item);
+        (self.op)(&mut item);
+        item.div_floor_assign(3);
+        let test = (self.test)(&item);
 
         self.inspections += 1;
         Some((

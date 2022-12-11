@@ -1,26 +1,25 @@
-use std::ops::{Add, Mul, Sub, Div};
+use rug::Integer;
+use std::ops::{AddAssign, MulAssign};
 
-pub fn parse(s: &str) -> Box<dyn Fn(usize) -> usize> {
+pub fn parse(s: &str) -> Box<dyn Fn(&mut Integer)> {
     assert!(s.starts_with("new = old "));
     let mutation = &s[10..];
     let (operator, operand) = mutation.split_once(' ').unwrap();
-    let operator: fn(usize, usize) -> usize = match operator {
-        "+" => Add::add,
-        "*" => Mul::mul,
-        "-" => Sub::sub,
-        "/" => Div::div,
+    let operator: fn(&mut Integer, Integer) = match operator {
+        "+" => AddAssign::add_assign,
+        "*" => MulAssign::mul_assign,
         other => panic!("unknown operator {}", other),
     };
     let operand = if operand == "old" {
         None
     } else {
-        Some(operand.parse::<usize>().unwrap())
+        Some(operand.parse::<Integer>().unwrap())
     };
-    Box::new(move |worry| {
+    Box::new(move |item: &mut Integer| {
         if let Some(operand) = operand.as_ref() {
-            operator(worry, *operand)
+            operator(item, operand.clone());
         } else {
-            operator(worry, worry)
+            operator(item, item.clone());
         }
     })
 }
