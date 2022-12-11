@@ -57,10 +57,12 @@ impl From<&mut dyn Iterator<Item = String>> for Monkey {
 impl Monkey {
     /// Inspect the next item, if any, and return the item
     /// and to which Monkey the item should be thrown.
-    pub fn inspect(&mut self) -> Option<(Integer, usize)> {
+    pub fn inspect(&mut self, round_2: bool) -> Option<(Integer, usize)> {
         let mut item = self.items.pop_front()?;
         (self.op)(&mut item);
-        item.div_floor_assign(3);
+        if !round_2 {
+            item.div_floor_assign(3);
+        }
         let test = (self.test)(&item);
 
         self.inspections += 1;

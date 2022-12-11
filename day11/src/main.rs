@@ -10,9 +10,18 @@ fn main() {
     let stdin = util::Stdin::new();
     let lines = stdin.cleaned_lines();
     let mut monkies: Vec<Monkey> = parse_monkies(lines).collect();
-    for _ in 0..20 {
-        perform_round(&mut monkies);
+
+    // for _ in 0..20 {
+    //     perform_round(&mut monkies, false);
+    // }
+
+    for round in 0..10_000 {
+        if round % 10 == 0 {
+            println!("round {}...", round);
+        }
+        perform_round(&mut monkies, true);
     }
+
     let most_active = monkies.iter().map(|m| &m.inspections).fold(
         (Integer::from(0), Integer::from(0)),
         |acc, inspections| {
@@ -29,10 +38,10 @@ fn main() {
     println!("monkey business: {}", monkey_business);
 }
 
-fn perform_round(monkies: &mut Vec<Monkey>) {
+fn perform_round(monkies: &mut Vec<Monkey>, round_2: bool) {
     for i in 0..monkies.len() {
         loop {
-            if let Some((item, thrown_to)) = monkies[i].inspect() {
+            if let Some((item, thrown_to)) = monkies[i].inspect(round_2) {
                 monkies[thrown_to].items.push_back(item);
             } else {
                 break;
