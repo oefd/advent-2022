@@ -1,17 +1,18 @@
 use std::collections::VecDeque;
 
+#[derive(Clone)]
 pub struct Monkey {
     pub id: usize,
     pub items: VecDeque<u64>,
     pub inspections: u64,
     op_is_add: bool,
     operand: Option<u64>,
-    test_factor: u64,
+    pub test_factor: u64,
     targets: (usize, usize),
 }
 
 impl Monkey {
-    pub fn inspect_item(&mut self) -> Option<(u64, usize)> {
+    pub fn inspect_item(&mut self, mod_by: Option<u64>) -> Option<(u64, usize)> {
         let mut item = self.items.pop_front()?;
         self.inspections += 1;
 
@@ -21,7 +22,11 @@ impl Monkey {
             (true, Some(value)) => item + value,
             (false, Some(value)) => item * value,
         };
-        item /= 3;
+        if let Some(mod_by) = mod_by {
+            item %= mod_by;
+        } else {
+            item /= 3;
+        }
 
         let target = if item % self.test_factor == 0 {
             self.targets.0
